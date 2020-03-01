@@ -1,6 +1,7 @@
 const HttpError = require("../models/http-error");
+const uuid = require("uuid/v4");
 
-const DUMMY_PLACES = [
+let DUMMY_PLACES = [
   {
     id: "p1",
     title: "great wall in china",
@@ -27,24 +28,63 @@ const getPlaceById = (req, res, next) => {
 };
 //middelware function focused
 
-const getPlaceByUserId = (req, res, next) => {
+const getPlacesByUserId = (req, res, next) => {
   const userId = req.params.uid;
-  const place = DUMMY_PLACES.find(u => {
+  const places = DUMMY_PLACES.filter(u => {
     return u.creator === userId;
   });
 
-  if (!place) {
+  if (!places || places.length === 0) {
     return next(
       new HttpError("could not find place with provided user id", 404)
     ); // this will trigger the error handling in app.js, handle asyn for data base later
   }
-  res.json({ place });
+  res.json({ places });
 };
 
-exports.getPlaceById = getPlaceById;
-exports.getPlaceByUserId = getPlaceByUserId;
+const createPlace = (req, res, next) => {
+  const { title, description, coordinates, address, creator } = req.body;
+  //const title = req.body.title
+  const createdPlace = {
+    id: uuid(),
+    title,
+    description,
+    location: coordinates,
+    address,
+    creator
+  };
 
+  DUMMY_PLACES.push(createdPlace); // unshift(createdPlace)
 
+  res.status(201).json({ place: createdPlace });
+}; //post request has a req.body
+
+const updatePlace = (req, res, next) => {
+  const { title, description } = req.body;
+  const placeId = req.params.pid;
+  const updatedPlace = { ...DUMMY_PLACES.find(p => p.id === placeId) }; // this will copy and create a new obj of place
+  const placeIndex = DUMMY_PLACES.findIndex(p => p.id === placeId);
+  updatedPlace.title = title;
+  updatedPlace.description = description;
+
+  DUMMY_PLACES[placeIndex] = updatePlace;
+
+  res.status(200).json({ place: updatedPlace });
+};
+
+const deletePlace = (req, res, next) => {
+  const placeId = req.params.pid;
+  DUMMY_PLACES = DUMMY_PLACES.filter(p => p.id !== placeId);
+  res.status(200).json({ message: "deleted places" });
+};
+
+module.exports = {
+  getPlaceById,
+  getPlacesByUserId,
+  createPlace,
+  deletePlace,
+  updatePlace
+};
 
 // function getPlaceById() { ... }
 // const getPlaceById = function () {...}
