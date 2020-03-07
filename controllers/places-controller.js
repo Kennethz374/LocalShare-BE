@@ -3,46 +3,65 @@ const { validationResult } = require("express-validator");
 
 const HttpError = require("../models/http-error");
 const getCoordsForAddress = require("../util/location");
+const Place = require("../models/place");
 
-let DUMMY_PLACES = [
-  {
-    id: "p1",
-    title: "great wall in china",
-    description: "one of the most famous place to visit",
-    location: {
-      lat: 40.784474,
-      lng: -73.9871516
-    },
-    Address: "ALKDSJFALKSDJF;ALKSJDF;ADSF",
-    creator: "u1"
-  }
-];
+// let DUMMY_PLACES = [
+//   {
+//     id: "p1",
+//     title: "great wall in china",
+//     description: "one of the most famous place to visit",
+//     location: {
+//       lat: 40.784474,
+//       lng: -73.9871516
+//     },
+//     Address: "ALKDSJFALKSDJF;ALKSJDF;ADSF",
+//     creator: "u1"
+//   }
+// ];
 
-const getPlaceById = (req, res, next) => {
+const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
-  const place = DUMMY_PLACES.find(p => {
-    return p.id === placeId;
-  });
-  if (!place) {
-    throw new HttpError("could not find place with provided place id", 404);
-    // this will trigger the error handling in app.js
+  let place;
+  try {
+    place = await Place.findById(placeId); //doesnot return promise, use exec() to get a promise back
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not find a place", // if get req doesnt work return this error
+      500
+    );
+    return next(error);
   }
-  res.json({ place });
+
+  if (!place) {
+    const error = new HttpError(
+      "could not find place with provided place id",
+      404
+    ); //get req success, but found not such place error
+    return next(error);
+  }
+  res.json({ place: place.toObject({ getters: true }) }); // return a workable object, and change _id to id (String)
 };
 //middelware function focused
 
-const getPlacesByUserId = (req, res, next) => {
+const getPlacesByUserId = async (req, res, next) => {
   const userId = req.params.uid;
-  const places = DUMMY_PLACES.filter(u => {
-    return u.creator === userId;
-  });
+  let places;
+  try {
+    places = await Place.find({ creator: userId }); //in no argument return everything, mongoose method
+  } catch (err) {
+    const error = new HttpError(
+      "Could not find places with provided user id",
+      500
+    );
+    return next(error);
+  }
 
   if (!places || places.length === 0) {
     return next(
       new HttpError("could not find place with provided user id", 404)
     ); // this will trigger the error handling in app.js, handle asyn for data base later
   }
-  res.json({ places });
+  res.json({ places: places.map(place => place.toObject({ getters: true })) });
 };
 
 const createPlace = async (req, res, next) => {
@@ -62,16 +81,26 @@ const createPlace = async (req, res, next) => {
     return next(error);
   }
   //const title = req.body.title
-  const createdPlace = {
-    id: uuid(),
+  const createdPlace = new Place({
     title,
     description,
-    location: coordinates,
     address,
+    location: coordinates,
+    image:
+      "https://upload.wikimedia.org/wikipedia/commons/2/23/The_Great_Wall_of_China_at_Jinshanling-edit.jpg",
     creator
-  };
+  });
+  try {
+    await createdPlace.save();
+  } catch (err) {
+    const error = new HttpError(
+      "Creating place failed, please try again...",
+      500
+    );
+    return next(error);
+  }
 
-  DUMMY_PLACES.push(createdPlace); // unshift(createdPlace)
+  // DUMMY_PLACES.push(createdPlace); // unshift(createdPlace)
 
   res.status(201).json({ place: createdPlace });
 }; //post request has a req.body
