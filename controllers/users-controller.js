@@ -88,13 +88,6 @@ const signup = async (req, res, next) => {
 const login = async (req, res, next) => {
   const { email, password } = req.body;
 
-  // const identifiedUser = DUMMY_USERS.find(u => u.email === email);
-  // if (!identifiedUser || identifiedUser.password !== password) {
-  //   throw new HttpError(
-  //     "Could not identify user, credential seem to be wrong,",
-  //     401
-  //   );
-  // }
   let existingUser;
 
   try {

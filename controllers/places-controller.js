@@ -1,4 +1,3 @@
-const uuid = require("uuid/v4");
 const { validationResult } = require("express-validator");
 const mongoose = require("mongoose");
 
@@ -6,20 +5,6 @@ const HttpError = require("../models/http-error");
 const getCoordsForAddress = require("../util/location");
 const Place = require("../models/place");
 const User = require("../models/user");
-
-// let DUMMY_PLACES = [
-//   {
-//     id: "p1",
-//     title: "great wall in china",
-//     description: "one of the most famous place to visit",
-//     location: {
-//       lat: 40.784474,
-//       lng: -73.9871516
-//     },
-//     Address: "ALKDSJFALKSDJF;ALKSJDF;ADSF",
-//     creator: "u1"
-//   }
-// ];
 
 const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
@@ -125,7 +110,6 @@ const createPlace = async (req, res, next) => {
     return next(error);
   }
 
-  // DUMMY_PLACES.push(createdPlace); // unshift(createdPlace)
 
   res.status(201).json({ place: createdPlace });
 }; //post request has a req.body
