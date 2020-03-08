@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
 
 const port = 4500;
 const placeRoutes = require("./routes/places-routes");
@@ -25,6 +26,21 @@ app.use((error, req, res, next) => {
   res.json({ message: error.message || "an unkown error occurred!" });
 }); //only trigger if there is an error attach to res, error handling
 
-app.listen(port, () => {
-  console.log(`listening on port ${port}`);
-});
+const connectUrl =
+  "mongodb+srv://Kenneth:testing123@cluster0-qzcwd.mongodb.net/places?retryWrites=true&w=majority";
+const connectConfig = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useCreateIndex: true
+};
+
+mongoose
+  .connect(connectUrl, connectConfig) //if connection is ok
+  .then(
+    app.listen(port, () => {
+      console.log(`listening on port ${port}`);
+    })
+  )
+  .catch(err => {
+    console.log(err);
+  });
